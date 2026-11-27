@@ -9,6 +9,7 @@ Leiste aus; die Symbole stehen links:
 | ☑ ToDo | ToDo-Liste mit Zeiterfassung (Play/Pause je Eintrag) | Strg+1 |
 | 💬 KI | Öffnet die KI: als **Webseite** (Browser und Profil einstellbar, z. B. immer ein bestimmtes Firefox-Profil) oder als **Programm** (z. B. die Claude-App – läuft sie schon, wird ihr Fenster nach vorn geholt) | Strg+2 |
 | 🔑 LAPS | Windows-LAPS-Kennwort abfragen, anzeigen und kopieren, plus eigene Tastatureingaben. LAPS ist in den Einstellungen abschaltbar – dann bleiben nur die Tastatureingaben (⌨) | Strg+3 |
+| 🖥 RDP | RDP-Server per Klick verbinden (`mstsc`), pro Server optional Admin-Sitzung (`/admin`); Server in den Einstellungen anlegen. Feld „Direkt verbinden“: Enter = verbinden, Umschalt+Enter = Admin-Sitzung | Strg+4 |
 | ⚙ Einstellungen | Größe (Schieberegler, wirkt sofort), Tastenkürzel, Autostart, LAPS-Benutzer, KI-Adresse | Strg+0 |
 
 **Esc** klappt zu.

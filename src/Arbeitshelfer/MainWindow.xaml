@@ -100,6 +100,8 @@
                       ToolTip="KI im Browser öffnen (Strg+2)" Click="BtnKi_Click"/>
               <Button x:Name="BtnLaps" Style="{StaticResource LeistenButton}" Content="&#xE8D7;"
                       ToolTip="LAPS-Kennwort (Strg+3)" Click="BtnLaps_Click"/>
+              <Button x:Name="BtnRdp" Style="{StaticResource LeistenButton}" Content="&#xE7F4;"
+                      ToolTip="RDP-Server (Strg+4)" Click="BtnRdp_Click"/>
             </StackPanel>
             <StackPanel DockPanel.Dock="Bottom">
               <Button x:Name="BtnEinstellungen" Style="{StaticResource LeistenButton}" Content="&#xE713;"
@@ -293,6 +295,32 @@
           <TextBlock x:Name="LapsStatus" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"/>
         </StackPanel>
 
+        <!-- ═════════ Bereich: RDP-Server ═════════ -->
+        <StackPanel x:Name="BereichRdp" Margin="10" Visibility="Collapsed">
+          <TextBlock Text="RDP-Server" FontWeight="SemiBold" Margin="0,0,0,6"/>
+          <ItemsControl x:Name="RdpListe">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource ListenButton}" Click="RdpVerbinden_Click" Tag="{Binding}">
+                  <Button.ToolTip>
+                    <TextBlock Text="{Binding Host, StringFormat='Remotedesktop zu {0} öffnen'}"/>
+                  </Button.ToolTip>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7F4;" FontFamily="{StaticResource Symbole}" FontSize="13"
+                               VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextGedimmt}"/>
+                    <TextBlock Text="{Binding Anzeige}"/>
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="RdpLeer" TextWrapping="Wrap" Foreground="{StaticResource TextGedimmt}" Margin="0,2"
+                     Text="Noch keine Server – unter ⚙ Einstellungen → RDP-Server anlegen."/>
+          <TextBlock Text="Direkt verbinden" Foreground="{StaticResource TextGedimmt}" FontSize="12" Margin="0,10,0,2"/>
+          <TextBox x:Name="RdpDirekt" Padding="4,3" KeyDown="RdpDirekt_KeyDown"
+                   ToolTip="Servername eingeben · Enter: verbinden · Umschalt+Enter: als Admin-Sitzung"/>
+        </StackPanel>
+
         <!-- ═════════ Bereich: Einstellungen ═════════ -->
         <ScrollViewer x:Name="BereichEinstellungen" MaxHeight="430" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
         <StackPanel Margin="10">
@@ -368,10 +396,43 @@
                     ToolTip="Stündlich prüfen; installiert wird nur, wenn die Leiste eingeklappt ist und keine Zeit läuft."/>
 
           <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}">
-            Im ausgeklappten Zustand: Strg+1 ToDo · Strg+2 KI · Strg+3 LAPS · Strg+0 Einstellungen · Esc zu
+            Im ausgeklappten Zustand: Strg+1 ToDo · Strg+2 KI · Strg+3 LAPS/Eingaben · Strg+4 RDP · Strg+0 Einstellungen · Esc zu
           </TextBlock>
 
           <!-- Eigene Tastatureingaben -->
+          <TextBlock Text="RDP-Server" FontWeight="SemiBold" Margin="0,14,0,6"/>
+          <ItemsControl x:Name="RdpEditor">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border BorderBrush="{StaticResource Rand}" BorderThickness="1" CornerRadius="6" Padding="6" Margin="0,0,0,6">
+                  <StackPanel>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="Server" FontSize="11" Foreground="{StaticResource TextGedimmt}"/>
+                        <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Padding="3,2"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="Anzeigename (optional)" FontSize="11" Foreground="{StaticResource TextGedimmt}"/>
+                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Padding="3,2"/>
+                      </StackPanel>
+                      <Button Grid.Column="3" Style="{StaticResource KleinerKnopf}" Content="&#xE74D;" VerticalAlignment="Bottom"
+                              FontFamily="{StaticResource Symbole}" Foreground="{StaticResource TextGedimmt}" Margin="4,0,0,0"
+                              ToolTip="Server löschen" Click="RdpLoeschen_Click" Tag="{Binding}"/>
+                    </Grid>
+                    <CheckBox Content="Admin-Sitzung (/admin)" IsChecked="{Binding Admin}" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button Content="+ Neuer Server" HorizontalAlignment="Left" Padding="10,3" Click="RdpNeu_Click"/>
+
           <TextBlock Text="Eigene Tastatureingaben" FontWeight="SemiBold" Margin="0,14,0,2"/>
           <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,6">
             Erscheinen als Symbole im LAPS-Bereich. Klick tippt ins letzte Fenster: [Benutzer TAB] Kennwort [ENTER].

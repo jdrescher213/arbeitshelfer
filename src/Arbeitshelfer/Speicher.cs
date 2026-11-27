@@ -72,6 +72,9 @@ public sealed class Einstellungen
     /// <summary>Neue Versionen automatisch installieren (wenn eingeklappt und keine Zeit läuft).</summary>
     public bool AutoUpdate { get; set; } = true;
 
+    /// <summary>RDP-Server (Bereich "Server", Strg+4).</summary>
+    public List<RdpServer> RdpServer { get; set; } = new();
+
     /// <summary>Ohne Transparenz zeichnen – nötig, wenn der Knopf (z. B. per Remote-Desktop/Citrix) unsichtbar bleibt.</summary>
     public bool EinfacheDarstellung { get; set; }
 }
@@ -111,6 +114,23 @@ public sealed class Eingabe : Beobachtbar
     [JsonIgnore]
     public string Beschreibung =>
         $"{Name}: {(Benutzer.Length > 0 ? Benutzer + " ⇥ " : "")}Kennwort{(MitEnter ? " ↵" : "")}";
+}
+
+/// <summary>Ein RDP-Server für die Remotedesktopverbindung (mstsc).</summary>
+public sealed class RdpServer : Beobachtbar
+{
+    private string _name = "";
+    private string _host = "";
+    private bool _admin;
+
+    public string Name { get => _name; set { _name = value; Melden(); Melden(nameof(Anzeige)); } }
+    public string Host { get => _host; set { _host = value; Melden(); Melden(nameof(Anzeige)); } }
+
+    /// <summary>Admin-Sitzung (mstsc /admin).</summary>
+    public bool Admin { get => _admin; set { _admin = value; Melden(); Melden(nameof(Anzeige)); } }
+
+    [JsonIgnore]
+    public string Anzeige => (string.IsNullOrWhiteSpace(Name) ? Host : Name) + (Admin ? "  (admin)" : "");
 }
 
 /// <summary>Ein Zeitabschnitt (Play bis Pause).</summary>

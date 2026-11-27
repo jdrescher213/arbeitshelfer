@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private readonly ICollectionView _todoAnsicht;
     private readonly ObservableCollection<string> _verlauf;
     private readonly ObservableCollection<Eingabe> _eingaben;
+    private readonly ObservableCollection<RdpServer> _rdp;
 
     private bool _ausgeklappt;
     private bool _nachOben;      // Leiste öffnet oberhalb des Knopfes (Knopf nahe unterem Rand)
@@ -75,6 +76,19 @@ public partial class MainWindow : Window
         _verlauf = new ObservableCollection<string>(_einstellungen.LetzteRechner.Take(MaxVerlauf));
         _verlauf.CollectionChanged += (_, _) => VerlaufAnzeigen();
         LapsVerlauf.ItemsSource = _verlauf;
+
+        // RDP-Server
+        _rdp = new ObservableCollection<RdpServer>(_einstellungen.RdpServer);
+        foreach (var r in _rdp) r.PropertyChanged += Eingabe_Geaendert;
+        _rdp.CollectionChanged += (_, _) =>
+        {
+            _einstellungen.RdpServer = _rdp.ToList();
+            RdpLeer.Visibility = _rdp.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            Speicher.SpeichereEinstellungen(_einstellungen);
+        };
+        RdpListe.ItemsSource = _rdp;
+        RdpEditor.ItemsSource = _rdp;
+        RdpLeer.Visibility = _rdp.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         // Eigene Tastatureingaben
         _eingaben = new ObservableCollection<Eingabe>(_einstellungen.Eingaben);
@@ -260,6 +274,7 @@ public partial class MainWindow : Window
             case Key.D1 or Key.NumPad1: BereichWaehlen("ToDo"); break;
             case Key.D2 or Key.NumPad2: KiOeffnen(); break;
             case Key.D3 or Key.NumPad3: BereichWaehlen("Laps"); break;
+            case Key.D4 or Key.NumPad4: BereichWaehlen("Rdp"); break;
             case Key.D0 or Key.NumPad0: BereichWaehlen("Einstellungen"); break;
             default: return;
         }
@@ -549,11 +564,13 @@ public partial class MainWindow : Window
 
     private void BereichZeigen(string bereich)
     {
-        _einstellungen.Bereich = bereich is "ToDo" or "Einstellungen" ? bereich : "Laps";
+        _einstellungen.Bereich = bereich is "ToDo" or "Einstellungen" or "Rdp" ? bereich : "Laps";
         var b = _einstellungen.Bereich;
         BereichTodo.Visibility = b == "ToDo" ? Visibility.Visible : Visibility.Collapsed;
         BereichLaps.Visibility = b == "Laps" ? Visibility.Visible : Visibility.Collapsed;
         BereichEinstellungen.Visibility = b == "Einstellungen" ? Visibility.Visible : Visibility.Collapsed;
+        BereichRdp.Visibility = b == "Rdp" ? Visibility.Visible : Visibility.Collapsed;
+        BtnRdp.Background = b == "Rdp" ? new SolidColorBrush(Color.FromRgb(0xDD, 0xE7, 0xF7)) : Brushes.Transparent;
         var aktiv = new SolidColorBrush(Color.FromRgb(0xDD, 0xE7, 0xF7));
         BtnTodo.Background = b == "ToDo" ? aktiv : Brushes.Transparent;
         BtnLaps.Background = b == "Laps" ? aktiv : Brushes.Transparent;
@@ -575,6 +592,7 @@ public partial class MainWindow : Window
         {
             "ToDo" => TodoEingabe,
             "Laps" => _einstellungen.LapsAktiv ? LapsEingabe : null,
+            "Rdp" => RdpDirekt,
             _ => null,
         };
         if (ziel is not null)
@@ -585,6 +603,58 @@ public partial class MainWindow : Window
     private void BtnLaps_Click(object sender, RoutedEventArgs e) => BereichWaehlen("Laps");
     private void BtnEinstellungen_Click(object sender, RoutedEventArgs e) => BereichWaehlen("Einstellungen");
     private void BtnKi_Click(object sender, RoutedEventArgs e) => KiOeffnen();
+    private void BtnRdp_Click(object sender, RoutedEventArgs e) => BereichWaehlen("Rdp");
+
+    // ───────────── RDP ─────────────
+
+    private void RdpStarten(string host, bool admin)
+    {
+        host = host.Trim();
+        if (host.Length == 0) return;
+        try
+        {
+            var psi = new ProcessStartInfo("mstsc.exe") { UseShellExecute = false };
+            psi.ArgumentList.Add($"/v:{host}");
+            if (admin) psi.ArgumentList.Add("/admin");
+            Process.Start(psi);
+            Einklappen();
+        }
+        catch (Exception ex)
+        {
+            App.FehlerProtokollieren(ex);
+            MessageBox.Show(this, $"Remotedesktop konnte nicht gestartet werden:\n{ex.Message}", "Arbeitshelfer",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void RdpVerbinden_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is RdpServer s) RdpStarten(s.Host, s.Admin);
+    }
+
+    private void RdpDirekt_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        RdpStarten(RdpDirekt.Text, admin: Keyboard.Modifiers == ModifierKeys.Shift);
+        RdpDirekt.Clear();
+        e.Handled = true;
+    }
+
+    private void RdpNeu_Click(object sender, RoutedEventArgs e)
+    {
+        var s = new RdpServer();
+        s.PropertyChanged += Eingabe_Geaendert;
+        _rdp.Add(s);
+    }
+
+    private void RdpLoeschen_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not RdpServer s) return;
+        if (MessageBox.Show(this, $"„{s.Anzeige}“ löschen?", "Arbeitshelfer", MessageBoxButton.YesNo,
+                MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        s.PropertyChanged -= Eingabe_Geaendert;
+        _rdp.Remove(s);
+    }
 
     private void KiOeffnen()
     {
