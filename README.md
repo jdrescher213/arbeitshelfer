@@ -73,7 +73,7 @@ Alle über ⚙ in der Leiste (die Datei `%APPDATA%\Arbeitshelfer\einstellungen.j
 | Schlüssel | Bedeutung | Standard |
 |---|---|---|
 | `Groesse` | Vergrößerung (1.0 = 100 %) | `2.0` |
-| `Tastenkuerzel` | `Win+Q`, `Strg+Alt+I`, `Strg+Alt+A`, `Strg+Umschalt+Leertaste`, `Rollen-Taste`, `Pause-Taste`, `Aus` | `Win+Q` |
+| `Tastenkuerzel` | `Win+Q`, `Strg+Alt+I`, `Strg+Alt+A`, `Strg+Umschalt+Leertaste`, `Rollen-Taste`, `Pause-Taste`, `Aus` oder eine **eigene Taste** (Einstellungen → *Taste aufnehmen*: Sondertasten, F13–F24, Medien-/Starttasten, gern mit Strg/Alt/Umschalt/Win) | `Win+Q` |
 | `LapsBenutzer` | Benutzer beim Eintippen (leer = nur Kennwort) | `.\administrator` |
 | `EintippenMitEnter` | Enter nach dem Kennwort | `true` |
 | `KiAdresse` | Adresse der KI (beim ersten Klick auf KI abgefragt) | leer |

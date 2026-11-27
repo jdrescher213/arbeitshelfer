@@ -302,7 +302,11 @@
                   ToolTip="Wirkt sofort"/>
 
           <TextBlock Text="Tastenkürzel zum Auf-/Zuklappen"/>
-          <ComboBox x:Name="EinstKuerzel" Margin="0,2,0,2" SelectionChanged="EinstKuerzel_SelectionChanged"/>
+          <DockPanel Margin="0,2,0,2">
+            <Button x:Name="TasteAufnehmenKnopf" DockPanel.Dock="Right" Content="Taste aufnehmen" Padding="8,1" Margin="4,0,0,0"
+                    Click="TasteAufnehmen_Click" ToolTip="Eigene Taste festlegen, z. B. eine Sondertaste der Tastatur"/>
+            <ComboBox x:Name="EinstKuerzel" SelectionChanged="EinstKuerzel_SelectionChanged"/>
+          </DockPanel>
           <TextBlock x:Name="EinstKuerzelHinweis" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,10"/>
           <CheckBox x:Name="EinstAutostart" Content="Mit Windows starten" Margin="0,0,0,10" Click="EinstAutostart_Click"/>
 

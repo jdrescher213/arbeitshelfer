@@ -21,6 +21,11 @@ public sealed class Einstellungen
     /// <summary>Systemweites Tastenkürzel zum Auf-/Zuklappen (Name aus Tastenkuerzel.Auswahl).</summary>
     public string Tastenkuerzel { get; set; } = "Win+Q";
 
+    /// <summary>Selbst aufgenommene Taste (wird verwendet, wenn Tastenkuerzel = "Eigen").</summary>
+    public string? EigeneTasteName { get; set; }
+    public int EigeneTasteVk { get; set; }
+    public int EigeneTasteMods { get; set; }
+
     /// <summary>Benutzername für LAPS-Eintippen (Benutzer TAB Kennwort ENTER).</summary>
     public string LapsBenutzer { get; set; } = @".\administrator";
 

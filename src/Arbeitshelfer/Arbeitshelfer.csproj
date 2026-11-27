@@ -10,7 +10,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>Arbeitshelfer</AssemblyName>
     <RootNamespace>Arbeitshelfer</RootNamespace>
-    <Version>0.7.2</Version>
+    <Version>0.8.0</Version>
     <Product>Arbeitshelfer</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>info.ico</ApplicationIcon>

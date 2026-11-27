@@ -93,8 +93,7 @@ public partial class MainWindow : Window
         // Einstellungen
         GroesseRegler.Value = _einstellungen.Groesse;
         GroesseText.Text = $"{_einstellungen.Groesse:P0}";
-        EinstKuerzel.ItemsSource = Tastenkuerzel.Auswahl.Select(k => k.Name).ToList();
-        EinstKuerzel.SelectedItem = Tastenkuerzel.Finden(_einstellungen.Tastenkuerzel).Name;
+        KuerzelListeFuellen();
         EinstLapsBenutzer.Text = _einstellungen.LapsBenutzer;
         EinstEnter.IsChecked = _einstellungen.EintippenMitEnter;
         EinstKiAdresse.Text = _einstellungen.KiAdresse;
@@ -110,6 +109,7 @@ public partial class MainWindow : Window
 
         // Systemweites Tastenkürzel
         KuerzelAnwenden();
+        _tastenkuerzel.Aufgenommen += (k, meldung) => Dispatcher.BeginInvoke(() => TasteAufgenommen(k, meldung));
         _tastenkuerzel.Ausgeloest += () => Dispatcher.BeginInvoke(() =>
         {
             if (_ausgeklappt && IsActive) Einklappen();
@@ -926,9 +926,59 @@ public partial class MainWindow : Window
             k.DeleteValue(AutostartName, throwOnMissingValue: false);
     }
 
+    private const string EigenPraefix = "Eigene Taste: ";
+
+    private Kuerzel? EigenesKuerzel() =>
+        _einstellungen.EigeneTasteVk == 0 || _einstellungen.EigeneTasteName is null
+            ? null
+            : new Kuerzel(_einstellungen.EigeneTasteName, (Modifikator)_einstellungen.EigeneTasteMods,
+                _einstellungen.EigeneTasteVk, "selbst aufgenommen");
+
+    private Kuerzel AktivesKuerzel() =>
+        _einstellungen.Tastenkuerzel == "Eigen" && EigenesKuerzel() is Kuerzel eigen
+            ? eigen
+            : Tastenkuerzel.Finden(_einstellungen.Tastenkuerzel);
+
+    private void KuerzelListeFuellen()
+    {
+        var namen = Tastenkuerzel.Auswahl.Select(k => k.Name).ToList();
+        if (EigenesKuerzel() is Kuerzel eigen) namen.Insert(0, EigenPraefix + eigen.Name);
+        EinstKuerzel.ItemsSource = namen;
+        var aktiv = AktivesKuerzel();
+        EinstKuerzel.SelectedItem = _einstellungen.Tastenkuerzel == "Eigen" ? EigenPraefix + aktiv.Name : aktiv.Name;
+    }
+
+    private void TasteAufnehmen_Click(object sender, RoutedEventArgs e)
+    {
+        _tastenkuerzel.Aufnahme = true;
+        TasteAufnehmenKnopf.Content = "Jetzt Taste drücken …";
+        EinstKuerzelHinweis.Text = "Gewünschte Taste drücken (gern mit Strg/Alt/Umschalt/Win). Esc bricht ab.";
+    }
+
+    private void TasteAufgenommen(Kuerzel? k, string? meldung)
+    {
+        TasteAufnehmenKnopf.Content = "Taste aufnehmen";
+        if (k is null)
+        {
+            EinstKuerzelHinweis.Text = meldung ?? "";
+            return;
+        }
+        _einstellungen.EigeneTasteName = k.Name;
+        _einstellungen.EigeneTasteVk = k.Vk;
+        _einstellungen.EigeneTasteMods = (int)k.Mods;
+        _einstellungen.Tastenkuerzel = "Eigen";
+        Speicher.SpeichereEinstellungen(_einstellungen);
+        var war = _initialisiert;
+        _initialisiert = false; // SelectionChanged beim Neufüllen ignorieren
+        KuerzelListeFuellen();
+        _initialisiert = war;
+        KuerzelAnwenden();
+        EinstKuerzelHinweis.Text = $"Übernommen: {k.Name}";
+    }
+
     private void KuerzelAnwenden()
     {
-        var k = Tastenkuerzel.Finden(_einstellungen.Tastenkuerzel);
+        var k = AktivesKuerzel();
         _tastenkuerzel.Kuerzel = k;
         EinstKuerzelHinweis.Text = k.Hinweis;
         InfoKnopf.ToolTip = k.Vk == 0
@@ -939,7 +989,7 @@ public partial class MainWindow : Window
     private void EinstKuerzel_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (EinstKuerzel.SelectedItem is not string name || !_initialisiert) return;
-        _einstellungen.Tastenkuerzel = name;
+        _einstellungen.Tastenkuerzel = name.StartsWith(EigenPraefix) ? "Eigen" : name;
         KuerzelAnwenden();
         Speicher.SpeichereEinstellungen(_einstellungen);
     }
