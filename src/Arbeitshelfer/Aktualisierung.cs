@@ -20,10 +20,12 @@ public static class Aktualisierung
     private const string Repo = "jdrescher213/arbeitshelfer";
     private const string DateiName = "Arbeitshelfer.exe";
 
-    private static readonly HttpClient Client = ClientErstellen();
-
+    // Reihenfolge wichtig: statische Felder werden von oben nach unten belegt,
+    // und ClientErstellen() braucht schon die Versionsnummer.
     public static Version Aktuell { get; } = Normalisieren(
         Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0));
+
+    private static readonly HttpClient Client = ClientErstellen();
 
     public static string AktuellText => $"{Aktuell.Major}.{Aktuell.Minor}.{Aktuell.Build}";
 

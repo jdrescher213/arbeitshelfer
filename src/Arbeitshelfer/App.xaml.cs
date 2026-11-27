@@ -52,7 +52,7 @@ public partial class App : Application
 
         base.OnStartup(e);
         NachUpdate = e.Args.Contains("--aktualisiert");
-        Aktualisierung.Aufraeumen();
+        try { Aktualisierung.Aufraeumen(); } catch (Exception ex) { FehlerProtokollieren(ex); }
         SessionEnding += (_, _) => (MainWindow as MainWindow)?.AllesSichern();
         MainWindow = new MainWindow();
         MainWindow.Show();
