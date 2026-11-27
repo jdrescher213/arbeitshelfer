@@ -7,8 +7,8 @@ Leiste aus; die Symbole stehen links:
 | Symbol | Funktion | Kürzel |
 |---|---|---|
 | ☑ ToDo | ToDo-Liste mit Zeiterfassung (Play/Pause je Eintrag) | Strg+1 |
-| 💬 KI | Öffnet die KI-Webseite (Adresse in den Einstellungen) – Browser und Profil einstellbar (z. B. immer ein bestimmtes Firefox-Profil) | Strg+2 |
-| 🔑 LAPS | Windows-LAPS-Kennwort abfragen, anzeigen und kopieren | Strg+3 |
+| 💬 KI | Öffnet die KI: als **Webseite** (Browser und Profil einstellbar, z. B. immer ein bestimmtes Firefox-Profil) oder als **Programm** (z. B. die Claude-App – läuft sie schon, wird ihr Fenster nach vorn geholt) | Strg+2 |
+| 🔑 LAPS | Windows-LAPS-Kennwort abfragen, anzeigen und kopieren, plus eigene Tastatureingaben. LAPS ist in den Einstellungen abschaltbar – dann bleiben nur die Tastatureingaben (⌨) | Strg+3 |
 | ⚙ Einstellungen | Größe (Schieberegler, wirkt sofort), Tastenkürzel, Autostart, LAPS-Benutzer, KI-Adresse | Strg+0 |
 
 **Esc** klappt zu.

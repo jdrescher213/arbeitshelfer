@@ -35,6 +35,17 @@ public sealed class Einstellungen
     /// <summary>Adresse der KI, öffnet im Standardbrowser.</summary>
     public string KiAdresse { get; set; } = "";
 
+    /// <summary>"Webseite" oder "Programm".</summary>
+    public string KiArt { get; set; } = "Webseite";
+
+    /// <summary>KI als Programm: Anzeigename, Startbefehl (.exe/.lnk-Pfad oder shell:AppsFolder\…) und Prozessname zum Hervorholen.</summary>
+    public string? KiProgrammName { get; set; }
+    public string? KiProgrammStart { get; set; }
+    public string? KiProgrammProzess { get; set; }
+
+    /// <summary>LAPS-Abfrage anzeigen (aus: nur eigene Tastatureingaben).</summary>
+    public bool LapsAktiv { get; set; } = true;
+
     /// <summary>Browser für die KI: "Standardbrowser", "Firefox", "Chrome" oder "Edge".</summary>
     public string KiBrowser { get; set; } = "Standardbrowser";
 

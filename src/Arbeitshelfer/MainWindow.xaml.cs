@@ -100,6 +100,10 @@ public partial class MainWindow : Window
         EinstBrowser.ItemsSource = Browser.Arten;
         EinstBrowser.SelectedItem = Browser.Arten.Contains(_einstellungen.KiBrowser) ? _einstellungen.KiBrowser : Browser.Standard;
         BrowserProfileLaden();
+        EinstKiArt.SelectedIndex = _einstellungen.KiArt == "Programm" ? 1 : 0;
+        KiArtAnzeigen();
+        EinstLapsAktiv.IsChecked = _einstellungen.LapsAktiv;
+        LapsAktivAnwenden();
         EinstAutoUpdate.IsChecked = _einstellungen.AutoUpdate;
         VersionText.Text = $"Version {Aktualisierung.AktuellText}";
 
@@ -568,7 +572,7 @@ public partial class MainWindow : Window
         Control? ziel = _einstellungen.Bereich switch
         {
             "ToDo" => TodoEingabe,
-            "Laps" => LapsEingabe,
+            "Laps" => _einstellungen.LapsAktiv ? LapsEingabe : null,
             _ => null,
         };
         if (ziel is not null)
@@ -582,6 +586,28 @@ public partial class MainWindow : Window
 
     private void KiOeffnen()
     {
+        if (_einstellungen.KiArt == "Programm")
+        {
+            if (string.IsNullOrWhiteSpace(_einstellungen.KiProgrammStart))
+            {
+                BereichWaehlen("Einstellungen");
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, () => EinstKiProgramm.BringIntoView());
+                return;
+            }
+            try
+            {
+                Einklappen();
+                Programme.OeffnenOderHervorholen(_einstellungen.KiProgrammStart, _einstellungen.KiProgrammProzess);
+            }
+            catch (Exception ex)
+            {
+                App.FehlerProtokollieren(ex);
+                MessageBox.Show(this, $"{_einstellungen.KiProgrammName} konnte nicht geöffnet werden:\n{ex.Message}",
+                    "Arbeitshelfer", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_einstellungen.KiAdresse))
         {
             // Noch keine Adresse hinterlegt: direkt zum Feld in den Einstellungen.
@@ -1039,6 +1065,130 @@ public partial class MainWindow : Window
     }
 
     private void KiTesten_Click(object sender, RoutedEventArgs e) => KiOeffnen();
+
+    // ── KI als Programm ──
+
+    private bool _programmeGeladen;
+
+    private void KiArtAnzeigen()
+    {
+        var programm = _einstellungen.KiArt == "Programm";
+        EinstKiWebBereich.Visibility = programm ? Visibility.Collapsed : Visibility.Visible;
+        EinstKiProgrammBereich.Visibility = programm ? Visibility.Visible : Visibility.Collapsed;
+        BtnKi.ToolTip = programm && _einstellungen.KiProgrammName is string n
+            ? $"{n} öffnen (Strg+2)"
+            : "KI im Browser öffnen (Strg+2)";
+        KiProgrammHinweisSetzen();
+        if (programm && !_programmeGeladen) _ = ProgrammlisteLadenAsync();
+    }
+
+    private void KiProgrammHinweisSetzen()
+    {
+        EinstKiProgrammHinweis.Text = string.IsNullOrEmpty(_einstellungen.KiProgrammStart)
+            ? "Noch kein Programm gewählt."
+            : $"Gewählt: {_einstellungen.KiProgrammName}";
+    }
+
+    private async Task ProgrammlisteLadenAsync()
+    {
+        _programmeGeladen = true;
+        EinstKiProgrammHinweis.Text = "Lade installierte Programme …";
+        List<StartApp> liste;
+        try
+        {
+            liste = await Programme.StartAppsAsync();
+        }
+        catch (Exception ex)
+        {
+            App.FehlerProtokollieren(ex);
+            liste = new();
+        }
+
+        // Bereits gewählte Datei (nicht aus dem Startmenü) mit aufnehmen.
+        if (_einstellungen.KiProgrammStart is string start && liste.All(a => a.Start != start))
+            liste.Insert(0, new StartApp(_einstellungen.KiProgrammName ?? start, start));
+
+        var war = _initialisiert;
+        _initialisiert = false;
+        EinstKiProgramm.ItemsSource = liste;
+        EinstKiProgramm.SelectedItem = liste.FirstOrDefault(a => a.Start == _einstellungen.KiProgrammStart);
+        _initialisiert = war;
+
+        // Noch nichts gewählt: Claude vorschlagen, falls installiert.
+        if (EinstKiProgramm.SelectedItem is null &&
+            liste.FirstOrDefault(a => a.Name.Equals("Claude", StringComparison.OrdinalIgnoreCase)) is StartApp claude)
+        {
+            EinstKiProgramm.SelectedItem = claude;
+            ProgrammUebernehmen(claude);
+        }
+
+        KiProgrammHinweisSetzen();
+        if (liste.Count == 0)
+            EinstKiProgrammHinweis.Text = "Programmliste nicht verfügbar – bitte über „Datei …“ wählen.";
+    }
+
+    private void ProgrammUebernehmen(StartApp app)
+    {
+        _einstellungen.KiProgrammName = app.Name;
+        _einstellungen.KiProgrammStart = app.Start;
+        _einstellungen.KiProgrammProzess = Programme.ProzessRaten(app.Name, app.Start);
+        Speicher.SpeichereEinstellungen(_einstellungen);
+        KiArtAnzeigen();
+    }
+
+    private void EinstKiArt_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialisiert) return;
+        _einstellungen.KiArt = EinstKiArt.SelectedIndex == 1 ? "Programm" : "Webseite";
+        Speicher.SpeichereEinstellungen(_einstellungen);
+        KiArtAnzeigen();
+    }
+
+    private void EinstKiProgramm_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialisiert || EinstKiProgramm.SelectedItem is not StartApp app) return;
+        ProgrammUebernehmen(app);
+    }
+
+    private void EinstKiProgrammDatei_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Programm für die KI wählen",
+            Filter = "Programme und Verknüpfungen|*.exe;*.lnk|Alle Dateien|*.*",
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        var app = new StartApp(Path.GetFileNameWithoutExtension(dialog.FileName), dialog.FileName);
+        var liste = (EinstKiProgramm.ItemsSource as List<StartApp>) ?? new List<StartApp>();
+        liste.Insert(0, app);
+        var war = _initialisiert;
+        _initialisiert = false;
+        EinstKiProgramm.ItemsSource = null;
+        EinstKiProgramm.ItemsSource = liste;
+        EinstKiProgramm.SelectedItem = app;
+        _initialisiert = war;
+        ProgrammUebernehmen(app);
+    }
+
+    // ── LAPS an/aus ──
+
+    private void LapsAktivAnwenden()
+    {
+        var an = _einstellungen.LapsAktiv;
+        LapsTeil.Visibility = an ? Visibility.Visible : Visibility.Collapsed;
+        EingabenTitel.Visibility = an ? Visibility.Collapsed : Visibility.Visible;
+        EinstLapsBereich.Visibility = an ? Visibility.Visible : Visibility.Collapsed;
+        BtnLaps.Content = an ? "\uE8D7" : "\uE765";
+        BtnLaps.ToolTip = an ? "LAPS & Tastatureingaben (Strg+3)" : "Tastatureingaben (Strg+3)";
+        if (!an) KennwortAusblenden();
+    }
+
+    private void EinstLapsAktiv_Click(object sender, RoutedEventArgs e)
+    {
+        _einstellungen.LapsAktiv = EinstLapsAktiv.IsChecked == true;
+        Speicher.SpeichereEinstellungen(_einstellungen);
+        LapsAktivAnwenden();
+    }
 
     private void EinstKiAdresse_LostFocus(object sender, RoutedEventArgs e)
     {

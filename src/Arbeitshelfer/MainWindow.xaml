@@ -213,6 +213,8 @@
 
         <!-- ═════════ Bereich: LAPS ═════════ -->
         <StackPanel x:Name="BereichLaps" Margin="10" Visibility="Collapsed">
+          <TextBlock x:Name="EingabenTitel" Text="Tastatureingaben" FontWeight="SemiBold" Margin="0,0,0,2" Visibility="Collapsed"/>
+          <StackPanel x:Name="LapsTeil">
           <TextBlock Text="LAPS-Kennwort" FontWeight="SemiBold" Margin="0,0,0,6"/>
           <DockPanel Margin="0,0,0,8">
             <Button x:Name="LapsAbfragenKnopf" DockPanel.Dock="Right" Content="Abfragen" Padding="10,2" Margin="4,0,0,0"
@@ -261,6 +263,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
           <TextBlock x:Name="LapsVerlaufLeer" Text="Noch keine Abfragen." Foreground="{StaticResource TextGedimmt}" Margin="0,2"/>
+          </StackPanel>
 
           <!-- Eigene Tastatureingaben (immer sichtbar) -->
           <ItemsControl x:Name="EingabenLeiste" Margin="0,8,0,0">
@@ -310,25 +313,48 @@
           <TextBlock x:Name="EinstKuerzelHinweis" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,10"/>
           <CheckBox x:Name="EinstAutostart" Content="Mit Windows starten" Margin="0,0,0,10" Click="EinstAutostart_Click"/>
 
-          <TextBlock Text="LAPS: Benutzer beim Eintippen"/>
-          <TextBox x:Name="EinstLapsBenutzer" Padding="4,3" Margin="0,2,0,4" LostFocus="EinstLapsBenutzer_LostFocus"
-                   ToolTip="Wird eingetippt, dann TAB, dann das Kennwort. Leer = nur Kennwort."/>
-          <CheckBox x:Name="EinstEnter" Content="Nach dem Kennwort Enter drücken" Margin="0,0,0,10" Click="EinstEnter_Click"/>
+          <CheckBox x:Name="EinstLapsAktiv" Content="LAPS verwenden" Margin="0,0,0,6" Click="EinstLapsAktiv_Click"
+                    ToolTip="Aus: LAPS-Abfrage ausblenden, die eigenen Tastatureingaben bleiben"/>
+          <StackPanel x:Name="EinstLapsBereich" Margin="0,0,0,10">
+            <TextBlock Text="LAPS: Benutzer beim Eintippen"/>
+            <TextBox x:Name="EinstLapsBenutzer" Padding="4,3" Margin="0,2,0,4" LostFocus="EinstLapsBenutzer_LostFocus"
+                     ToolTip="Wird eingetippt, dann TAB, dann das Kennwort. Leer = nur Kennwort."/>
+            <CheckBox x:Name="EinstEnter" Content="Nach dem Kennwort Enter drücken" Click="EinstEnter_Click"/>
+          </StackPanel>
 
-          <TextBlock Text="Adresse der KI (z. B. https://ki.firma.de)"/>
-          <TextBox x:Name="EinstKiAdresse" Padding="4,3" Margin="0,2,0,6" LostFocus="EinstKiAdresse_LostFocus"/>
-          <TextBlock Text="Browser für die KI"/>
-          <DockPanel Margin="0,2,0,4">
+          <TextBlock Text="KI öffnen als"/>
+          <DockPanel Margin="0,2,0,6">
             <Button DockPanel.Dock="Right" Content="Testen" Padding="8,1" Margin="4,0,0,0" Click="KiTesten_Click"
                     ToolTip="KI jetzt mit diesen Einstellungen öffnen"/>
-            <ComboBox x:Name="EinstBrowser" SelectionChanged="EinstBrowser_SelectionChanged"/>
+            <ComboBox x:Name="EinstKiArt" SelectionChanged="EinstKiArt_SelectionChanged">
+              <ComboBoxItem Content="Webseite"/>
+              <ComboBoxItem Content="Programm"/>
+            </ComboBox>
           </DockPanel>
-          <StackPanel x:Name="EinstProfilBereich">
-            <TextBlock Text="Profil"/>
-            <ComboBox x:Name="EinstProfil" Margin="0,2,0,2" DisplayMemberPath="Anzeige" SelectedValuePath="Wert"
-                      SelectionChanged="EinstProfil_SelectionChanged"/>
+
+          <StackPanel x:Name="EinstKiWebBereich">
+            <TextBlock Text="Adresse der KI (z. B. https://ki.firma.de)"/>
+            <TextBox x:Name="EinstKiAdresse" Padding="4,3" Margin="0,2,0,6" LostFocus="EinstKiAdresse_LostFocus"/>
+            <TextBlock Text="Browser"/>
+            <ComboBox x:Name="EinstBrowser" Margin="0,2,0,4" SelectionChanged="EinstBrowser_SelectionChanged"/>
+            <StackPanel x:Name="EinstProfilBereich">
+              <TextBlock Text="Profil"/>
+              <ComboBox x:Name="EinstProfil" Margin="0,2,0,2" DisplayMemberPath="Anzeige" SelectedValuePath="Wert"
+                        SelectionChanged="EinstProfil_SelectionChanged"/>
+            </StackPanel>
+            <TextBlock x:Name="EinstProfilHinweis" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,10"/>
           </StackPanel>
-          <TextBlock x:Name="EinstProfilHinweis" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,10"/>
+
+          <StackPanel x:Name="EinstKiProgrammBereich" Margin="0,0,0,10">
+            <TextBlock Text="Programm (läuft es schon, wird es nach vorn geholt)"/>
+            <DockPanel Margin="0,2,0,2">
+              <Button DockPanel.Dock="Right" Content="Datei …" Padding="6,1" Margin="4,0,0,0" Click="EinstKiProgrammDatei_Click"
+                      ToolTip="Programm (.exe) oder Verknüpfung (.lnk) wählen"/>
+              <ComboBox x:Name="EinstKiProgramm" DisplayMemberPath="Name" IsTextSearchEnabled="True" TextSearch.TextPath="Name"
+                        SelectionChanged="EinstKiProgramm_SelectionChanged"/>
+            </DockPanel>
+            <TextBlock x:Name="EinstKiProgrammHinweis" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}"/>
+          </StackPanel>
 
           <DockPanel Margin="0,0,0,4">
             <Button DockPanel.Dock="Right" Content="Jetzt suchen" Padding="8,1" Click="UpdateSuchen_Click"
