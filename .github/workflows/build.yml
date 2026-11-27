@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Version aus der Projektdatei lesen
+        id: version
+        shell: pwsh
+        run: |
+          [xml]$projekt = Get-Content src/Arbeitshelfer/Arbeitshelfer.csproj
+          $v = @($projekt.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ })[0]
+          if (-not $v) { throw "Keine <Version> in der Projektdatei" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Veröffentlichen (eine einzelne .exe, ohne Installation lauffähig)
+        run: >
+          dotnet publish src/Arbeitshelfer/Arbeitshelfer.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none
+          -o publish
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: Arbeitshelfer
+          path: publish/Arbeitshelfer.exe
+
+      # Für das Auto-Update: je Version ein Release. Ohne Versionssprung wird kein neues angelegt.
+      - name: Gibt es das Release schon?
+        id: release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          gh release view $env:TAG --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) { "vorhanden=true" >> $env:GITHUB_OUTPUT } else { "vorhanden=false" >> $env:GITHUB_OUTPUT }
+          exit 0
+
+      - name: Release anlegen
+        if: steps.release.outputs.vorhanden == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Arbeitshelfer ${{ steps.version.outputs.version }}
+          body: ${{ github.event.head_commit.message }}
+          files: publish/Arbeitshelfer.exe
+          make_latest: true

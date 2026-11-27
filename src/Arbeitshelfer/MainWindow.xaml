@@ -1,0 +1,396 @@
+<Window x:Class="Arbeitshelfer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Arbeitshelfer"
+        Title="Arbeitshelfer"
+        Icon="pack://application:,,,/info.ico"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        FontFamily="Segoe UI"
+        FontSize="13"
+        UseLayoutRounding="True">
+
+  <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="Sichtbar"/>
+    <FontFamily x:Key="Symbole">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <Style x:Key="KleinerKnopf" TargetType="Button">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Padding" Value="4,1"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="#EAEEF2"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid x:Name="Gesamt" Margin="6">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Schwebender Info-Knopf (eingeklappter Zustand) -->
+    <Border x:Name="InfoKnopf" Grid.Row="0"
+            Width="44" Height="44" CornerRadius="22"
+            HorizontalAlignment="Left"
+            Background="{StaticResource Akzent}"
+            Cursor="Hand"
+            ToolTip="Klick oder Tastenkürzel: auf-/zuklappen · Ziehen: verschieben · Rechtsklick: Menü"
+            MouseLeftButtonDown="InfoKnopf_MouseLeftButtonDown"
+            MouseMove="InfoKnopf_MouseMove"
+            MouseLeftButtonUp="InfoKnopf_MouseLeftButtonUp">
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.35"/>
+      </Border.Effect>
+      <Border.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Einstellungen" Click="MenuEinstellungen_Click"/>
+          <MenuItem Header="Einstellungsordner öffnen" Click="MenuOrdner_Click"/>
+          <Separator/>
+          <MenuItem Header="Beenden" Click="MenuBeenden_Click"/>
+        </ContextMenu>
+      </Border.ContextMenu>
+      <Grid>
+        <TextBlock Text="i" Foreground="White" FontFamily="Georgia" FontSize="24" FontWeight="Bold"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+        <!-- Grüner Punkt: Zeiterfassung läuft -->
+        <Ellipse x:Name="ZeitLaeuftPunkt" Width="12" Height="12" Fill="#2DA44E" Stroke="White" StrokeThickness="2"
+                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-1,-1,0"
+                 Visibility="Collapsed" ToolTip="Zeiterfassung läuft"/>
+      </Grid>
+    </Border>
+
+    <!-- Ausgeklappte Symbolleiste -->
+    <Border x:Name="Leiste" Grid.Row="1" Width="396" Margin="0,6,0,0"
+            Visibility="Collapsed"
+            Background="{StaticResource Flaeche}"
+            BorderBrush="{StaticResource Rand}" BorderThickness="1" CornerRadius="8"
+            HorizontalAlignment="Left">
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.25"/>
+      </Border.Effect>
+      <DockPanel>
+        <!-- Symbolleiste links -->
+        <Border DockPanel.Dock="Left" BorderBrush="{StaticResource Rand}" BorderThickness="0,0,1,0">
+          <DockPanel Margin="4" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Top">
+              <Button x:Name="BtnTodo" Style="{StaticResource LeistenButton}" Content="&#xE9D5;"
+                      ToolTip="ToDo &amp; Zeiterfassung (Strg+1)" Click="BtnTodo_Click"/>
+              <Button x:Name="BtnKi" Style="{StaticResource LeistenButton}" Content="&#xE8F2;"
+                      ToolTip="KI im Browser öffnen (Strg+2)" Click="BtnKi_Click"/>
+              <Button x:Name="BtnLaps" Style="{StaticResource LeistenButton}" Content="&#xE8D7;"
+                      ToolTip="LAPS-Kennwort (Strg+3)" Click="BtnLaps_Click"/>
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Bottom">
+              <Button x:Name="BtnEinstellungen" Style="{StaticResource LeistenButton}" Content="&#xE713;"
+                      ToolTip="Einstellungen (Strg+0)" Click="BtnEinstellungen_Click"/>
+              <Button Style="{StaticResource LeistenButton}" Content="&#xE70E;"
+                      ToolTip="Einklappen (Esc)" Click="Einklappen_Click"/>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <StackPanel>
+
+        <!-- ═════════ Bereich: ToDo + Zeiterfassung ═════════ -->
+        <StackPanel x:Name="BereichTodo" Margin="10" Visibility="Collapsed">
+          <TextBlock Text="ToDo &amp; Zeiterfassung" FontWeight="SemiBold" Margin="0,0,0,6"/>
+          <DockPanel Margin="0,0,0,6">
+            <Button DockPanel.Dock="Right" Content="+" Width="30" Margin="4,0,0,0"
+                    ToolTip="Hinzufügen (Enter) · Hinzufügen und Zeit starten (Umschalt+Enter)" Click="TodoHinzufuegen_Click"/>
+            <Grid>
+              <TextBox x:Name="TodoEingabe" Padding="4,3" KeyDown="TodoEingabe_KeyDown"/>
+              <TextBlock Text="Ticketnr. / Betreff – Enter" Foreground="#8C959F" Margin="7,4,0,0"
+                         IsHitTestVisible="False">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Text, ElementName=TodoEingabe}" Value="">
+                        <Setter Property="Visibility" Value="Visible"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Grid>
+          </DockPanel>
+
+          <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="TodoListe">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="0,2">
+                    <DockPanel>
+                      <!-- Zeit: Summe (Klick = Einzelbuchungen) und Play/Pause -->
+                      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Style="{StaticResource KleinerKnopf}" Click="SummeKlick_Click" Tag="{Binding}"
+                                Visibility="{Binding HatZeit, Converter={StaticResource Sichtbar}}"
+                                ToolTip="Einzelbuchungen anzeigen">
+                          <TextBlock Text="{Binding SummeText}" FontFamily="Consolas" Foreground="{StaticResource TextGedimmt}"/>
+                        </Button>
+                        <Button Click="PlayPause_Click" Tag="{Binding}" Width="26" Height="24" Margin="2,0,0,0">
+                          <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource KleinerKnopf}">
+                              <Setter Property="Content" Value="&#xE768;"/>
+                              <Setter Property="Foreground" Value="#2DA44E"/>
+                              <Setter Property="ToolTip" Value="Zeit starten"/>
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding Laeuft}" Value="True">
+                                  <Setter Property="Content" Value="&#xE769;"/>
+                                  <Setter Property="Foreground" Value="#BF8700"/>
+                                  <Setter Property="ToolTip" Value="Pausieren"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Erledigt}" Value="True">
+                                  <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                          <Button.FontFamily>Segoe Fluent Icons, Segoe MDL2 Assets</Button.FontFamily>
+                        </Button>
+                      </StackPanel>
+                      <CheckBox IsChecked="{Binding Erledigt}" VerticalAlignment="Center" Margin="0,0,6,0"
+                                ToolTip="Erledigt"/>
+                      <TextBlock Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Erledigt}" Value="True">
+                                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextGedimmt}"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Laeuft}" Value="True">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </DockPanel>
+
+                    <!-- Einzelbuchungen -->
+                    <Border Margin="24,2,0,4" Padding="6,4" Background="#F0F3F6" CornerRadius="4"
+                            Visibility="{Binding BuchungenOffen, Converter={StaticResource Sichtbar}}">
+                      <ItemsControl ItemsSource="{Binding Buchungen}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <DockPanel>
+                              <TextBlock DockPanel.Dock="Right" Text="{Binding LaengeText}" FontFamily="Consolas" Margin="10,0,0,0"/>
+                              <TextBlock Text="{Binding Anzeige}" FontSize="12" Foreground="{StaticResource TextGedimmt}"/>
+                            </DockPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Border>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <TextBlock x:Name="TodoLeer" Text="Nichts zu tun." Foreground="{StaticResource TextGedimmt}" Margin="0,4"/>
+          <CheckBox x:Name="ErledigteEinblenden" Content="Erledigte einblenden" Margin="0,8,0,0"
+                    Foreground="{StaticResource TextGedimmt}" Click="ErledigteEinblenden_Click"/>
+        </StackPanel>
+
+        <!-- ═════════ Bereich: LAPS ═════════ -->
+        <StackPanel x:Name="BereichLaps" Margin="10" Visibility="Collapsed">
+          <TextBlock Text="LAPS-Kennwort" FontWeight="SemiBold" Margin="0,0,0,6"/>
+          <DockPanel Margin="0,0,0,8">
+            <Button x:Name="LapsAbfragenKnopf" DockPanel.Dock="Right" Content="Abfragen" Padding="10,2" Margin="4,0,0,0"
+                    Click="LapsAbfragen_Click"/>
+            <TextBox x:Name="LapsEingabe" Padding="4,3" KeyDown="LapsEingabe_KeyDown"
+                     ToolTip="Rechnername eingeben · Enter: anzeigen und kopieren · Umschalt+Enter: eintippen"/>
+          </DockPanel>
+
+          <!-- Angezeigtes Kennwort -->
+          <Border x:Name="KennwortKasten" Visibility="Collapsed" Margin="0,0,0,8" Padding="8,6"
+                  Background="#FFF8C5" BorderBrush="#D4A72C" BorderThickness="1" CornerRadius="6">
+            <StackPanel>
+              <DockPanel>
+                <Button DockPanel.Dock="Right" Style="{StaticResource KleinerKnopf}" Content="&#xE711;"
+                        FontFamily="{StaticResource Symbole}" ToolTip="Ausblenden" Click="KennwortAusblenden_Click"/>
+                <Button DockPanel.Dock="Right" Style="{StaticResource KleinerKnopf}" Content="&#xE8C8;"
+                        FontFamily="{StaticResource Symbole}" ToolTip="Erneut kopieren" Click="KennwortKopieren_Click"/>
+                <Button DockPanel.Dock="Right" Style="{StaticResource KleinerKnopf}" Content="&#xE765;"
+                        FontFamily="{StaticResource Symbole}" ToolTip="Ins letzte Fenster eintippen" Click="KennwortEintippen_Click"/>
+                <TextBlock x:Name="KennwortRechner" FontSize="12" Foreground="{StaticResource TextGedimmt}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBox x:Name="KennwortText" IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                       FontFamily="Consolas" FontSize="20" TextWrapping="Wrap" Margin="0,2,0,0"/>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="Letzte Abfragen – Klick tippt ein" Foreground="{StaticResource TextGedimmt}" FontSize="12" Margin="0,0,0,2"/>
+          <ItemsControl x:Name="LapsVerlauf">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <DockPanel>
+                  <Button DockPanel.Dock="Right" Style="{StaticResource KleinerKnopf}" Content="&#xE7B3;"
+                          FontFamily="{StaticResource Symbole}" Foreground="{StaticResource TextGedimmt}"
+                          Click="LapsVerlaufAnzeigen_Click" Tag="{Binding}"
+                          ToolTip="Nur anzeigen und kopieren"/>
+                  <Button Style="{StaticResource ListenButton}" Click="LapsVerlauf_Click" Tag="{Binding}"
+                          ToolTip="Klick: ins letzte Fenster wechseln und Benutzer TAB Kennwort ENTER eintippen">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE765;" FontFamily="{StaticResource Symbole}" FontSize="12"
+                                 VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextGedimmt}"/>
+                      <TextBlock Text="{Binding}"/>
+                    </StackPanel>
+                  </Button>
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="LapsVerlaufLeer" Text="Noch keine Abfragen." Foreground="{StaticResource TextGedimmt}" Margin="0,2"/>
+
+          <!-- Eigene Tastatureingaben (immer sichtbar) -->
+          <ItemsControl x:Name="EingabenLeiste" Margin="0,8,0,0">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource KleinerKnopf}" Width="38" Height="38" Margin="0,0,4,4"
+                        BorderBrush="{StaticResource Rand}" BorderThickness="1"
+                        Click="EingabeTippen_Click" Tag="{Binding}">
+                  <Button.ToolTip>
+                    <TextBlock Text="{Binding Beschreibung, StringFormat='{}{0} – ins letzte Fenster eintippen'}"/>
+                  </Button.ToolTip>
+                  <Image Source="{Binding Bild}" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock x:Name="EingabenLeer" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,4,0,0"
+                     Text="Eigene Tastatureingaben unter ⚙ Einstellungen anlegen."/>
+          <TextBlock x:Name="LapsZiel" TextWrapping="Wrap" Margin="0,8,0,0" FontSize="12" Foreground="{StaticResource TextGedimmt}"/>
+          <TextBlock x:Name="LapsStatus" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"/>
+        </StackPanel>
+
+        <!-- ═════════ Bereich: Einstellungen ═════════ -->
+        <ScrollViewer x:Name="BereichEinstellungen" MaxHeight="430" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel Margin="10">
+          <TextBlock Text="Einstellungen" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+          <DockPanel>
+            <TextBlock x:Name="GroesseText" DockPanel.Dock="Right" Width="44" TextAlignment="Right" FontFamily="Consolas"/>
+            <TextBlock Text="Größe"/>
+          </DockPanel>
+          <Slider x:Name="GroesseRegler" Minimum="1" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                  SmallChange="0.1" LargeChange="0.25" Margin="0,2,0,10" ValueChanged="GroesseRegler_ValueChanged"
+                  ToolTip="Wirkt sofort"/>
+
+          <TextBlock Text="Tastenkürzel zum Auf-/Zuklappen"/>
+          <ComboBox x:Name="EinstKuerzel" Margin="0,2,0,2" SelectionChanged="EinstKuerzel_SelectionChanged"/>
+          <TextBlock x:Name="EinstKuerzelHinweis" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,10"/>
+          <CheckBox x:Name="EinstAutostart" Content="Mit Windows starten" Margin="0,0,0,10" Click="EinstAutostart_Click"/>
+
+          <TextBlock Text="LAPS: Benutzer beim Eintippen"/>
+          <TextBox x:Name="EinstLapsBenutzer" Padding="4,3" Margin="0,2,0,4" LostFocus="EinstLapsBenutzer_LostFocus"
+                   ToolTip="Wird eingetippt, dann TAB, dann das Kennwort. Leer = nur Kennwort."/>
+          <CheckBox x:Name="EinstEnter" Content="Nach dem Kennwort Enter drücken" Margin="0,0,0,10" Click="EinstEnter_Click"/>
+
+          <TextBlock Text="Adresse der KI (z. B. https://ki.firma.de)"/>
+          <TextBox x:Name="EinstKiAdresse" Padding="4,3" Margin="0,2,0,6" LostFocus="EinstKiAdresse_LostFocus"/>
+          <TextBlock Text="Browser für die KI"/>
+          <DockPanel Margin="0,2,0,4">
+            <Button DockPanel.Dock="Right" Content="Testen" Padding="8,1" Margin="4,0,0,0" Click="KiTesten_Click"
+                    ToolTip="KI jetzt mit diesen Einstellungen öffnen"/>
+            <ComboBox x:Name="EinstBrowser" SelectionChanged="EinstBrowser_SelectionChanged"/>
+          </DockPanel>
+          <StackPanel x:Name="EinstProfilBereich">
+            <TextBlock Text="Profil"/>
+            <ComboBox x:Name="EinstProfil" Margin="0,2,0,2" DisplayMemberPath="Anzeige" SelectedValuePath="Wert"
+                      SelectionChanged="EinstProfil_SelectionChanged"/>
+          </StackPanel>
+          <TextBlock x:Name="EinstProfilHinweis" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,10"/>
+
+          <DockPanel Margin="0,0,0,4">
+            <Button DockPanel.Dock="Right" Content="Jetzt suchen" Padding="8,1" Click="UpdateSuchen_Click"
+                    ToolTip="Nach einer neuen Version suchen und sofort installieren"/>
+            <TextBlock x:Name="VersionText" VerticalAlignment="Center"/>
+          </DockPanel>
+          <CheckBox x:Name="EinstAutoUpdate" Content="Updates automatisch installieren" Margin="0,0,0,10"
+                    Click="EinstAutoUpdate_Click"
+                    ToolTip="Stündlich prüfen; installiert wird nur, wenn die Leiste eingeklappt ist und keine Zeit läuft."/>
+
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}">
+            Im ausgeklappten Zustand: Strg+1 ToDo · Strg+2 KI · Strg+3 LAPS · Strg+0 Einstellungen · Esc zu
+          </TextBlock>
+
+          <!-- Eigene Tastatureingaben -->
+          <TextBlock Text="Eigene Tastatureingaben" FontWeight="SemiBold" Margin="0,14,0,2"/>
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextGedimmt}" Margin="0,0,0,6">
+            Erscheinen als Symbole im LAPS-Bereich. Klick tippt ins letzte Fenster: [Benutzer TAB] Kennwort [ENTER].
+            Alles wird verschlüsselt gespeichert.
+          </TextBlock>
+          <ItemsControl x:Name="EingabenEditor">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border BorderBrush="{StaticResource Rand}" BorderThickness="1" CornerRadius="6" Padding="6" Margin="0,0,0,6">
+                  <StackPanel>
+                    <DockPanel>
+                      <Button DockPanel.Dock="Right" Style="{StaticResource KleinerKnopf}" Content="&#xE74D;"
+                              FontFamily="{StaticResource Symbole}" Foreground="{StaticResource TextGedimmt}"
+                              ToolTip="Eingabe löschen" Click="EingabeLoeschen_Click" Tag="{Binding}"/>
+                      <Image DockPanel.Dock="Left" Source="{Binding Bild}" Width="22" Height="22" Margin="0,0,6,0"
+                             RenderOptions.BitmapScalingMode="HighQuality"/>
+                      <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Padding="3,2" ToolTip="Name (erscheint als Tooltip)"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,4,0,0">
+                      <Button DockPanel.Dock="Right" Content="Datei …" Padding="6,1" Margin="4,0,0,0"
+                              ToolTip="Symbol aus Programm (.exe), .ico oder Bild wählen"
+                              Click="EingabeSymbolDatei_Click" Tag="{Binding}"/>
+                      <ComboBox ItemsSource="{x:Static local:Symbole.Eingebaut}" SelectedItem="{Binding Symbol}" ToolTip="Symbol"/>
+                    </DockPanel>
+                    <Grid Margin="0,4,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition/>
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="Benutzer (optional)" FontSize="11" Foreground="{StaticResource TextGedimmt}"/>
+                        <TextBox Text="{Binding Benutzer, UpdateSourceTrigger=PropertyChanged}" Padding="3,2"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="Kennwort" FontSize="11" Foreground="{StaticResource TextGedimmt}"/>
+                        <PasswordBox Padding="3,2" Tag="{Binding}" Loaded="EingabeKennwort_Loaded"
+                                     PasswordChanged="EingabeKennwort_PasswordChanged"/>
+                      </StackPanel>
+                    </Grid>
+                    <CheckBox Content="Enter am Ende" IsChecked="{Binding MitEnter}" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button Content="+ Neue Eingabe" HorizontalAlignment="Left" Padding="10,3" Click="EingabeNeu_Click"/>
+        </StackPanel>
+        </ScrollViewer>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+  </Grid>
+</Window>
