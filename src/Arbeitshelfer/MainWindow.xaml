@@ -63,6 +63,8 @@
       <Border.ContextMenu>
         <ContextMenu>
           <MenuItem Header="Einstellungen" Click="MenuEinstellungen_Click"/>
+          <MenuItem Header="Update jetzt" Click="MenuUpdate_Click"
+                    ToolTip="Nach einer neuen Version suchen und sofort installieren"/>
           <MenuItem Header="Einstellungsordner öffnen" Click="MenuOrdner_Click"/>
           <Separator/>
           <MenuItem Header="Beenden" Click="MenuBeenden_Click"/>

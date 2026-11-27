@@ -508,7 +508,7 @@ public partial class MainWindow : Window
             ((App)Application.Current).Neustarten();
         };
         menue.Items.Add(einfach);
-        menue.Items.Add("Nach Updates suchen", null, (_, _) => _ = UpdatePruefenAsync(manuell: true));
+        menue.Items.Add("Update jetzt", null, (_, _) => _ = UpdatePruefenAsync(manuell: true));
         menue.Items.Add("Einstellungsordner öffnen", null, (_, _) => OrdnerOeffnen());
         menue.Items.Add(new Forms.ToolStripSeparator());
         menue.Items.Add("Beenden", null, (_, _) => Close());
@@ -534,6 +534,8 @@ public partial class MainWindow : Window
     }
 
     private void MenuOrdner_Click(object sender, RoutedEventArgs e) => OrdnerOeffnen();
+
+    private void MenuUpdate_Click(object sender, RoutedEventArgs e) => _ = UpdatePruefenAsync(manuell: true);
 
     private void MenuBeenden_Click(object sender, RoutedEventArgs e) => Close();
 
